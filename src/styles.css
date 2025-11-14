@@ -167,16 +167,13 @@ button {
   gap: 12px;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 8px;
+.scroll-sentinel {
+  width: 100%;
+  height: 1px;
 }
 
-.pagination-status {
-  flex: 1;
+.infinite-scroll-status {
+  margin-top: 12px;
   text-align: center;
   font-size: 14px;
   color: var(--muted-color);
