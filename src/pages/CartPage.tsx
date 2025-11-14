@@ -33,14 +33,14 @@ export const CartPage: React.FC<CartPageProps> = ({ onContinueShopping, onChecko
             return null;
           }
           const lineTotal = variant.price * item.quantity;
+          const variantLabel = `${variant.weight} x ${variant.price.toLocaleString('ru-RU')} ₽`;
 
           return (
             <div key={`${item.productId}-${item.variantId}`} className="cart-item">
               <img src={product.image} alt={product.name} className="cart-item-image" />
               <div className="cart-item-info">
                 <div className="cart-item-title">{product.name}</div>
-                <div className="cart-item-subtitle">{variant.weight}</div>
-                <div className="cart-item-price">{variant.price.toLocaleString('ru-RU')} ₽</div>
+                <div className="cart-item-subtitle">{variantLabel}</div>
               </div>
               <div className="cart-item-actions">
                 <QuantityControl
