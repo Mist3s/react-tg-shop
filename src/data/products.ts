@@ -74,6 +74,90 @@ export const products: Product[] = [
       { id: 'set-1', weight: '5 × 25 г', price: 2500 },
       { id: 'set-2', weight: '5 × 50 г', price: 4200 }
     ]
+  },
+  {
+    id: 'tea-set2',
+    name: 'Подарочный набор «Пять стихий»',
+    description:
+      'Подборка лучших чаёв сезона в мини-упаковках: зелёный, улун, красный, белый и пуэр в стильной коробке.',
+    category: 'sets',
+    tags: ['Набор', 'Подарок'],
+    image:
+      'https://images.unsplash.com/photo-1523905330026-b8bd1f5f320e?auto=format&fit=crop&w=600&q=80',
+    variants: [
+      { id: 'set-12', weight: '5 × 25 г', price: 2500 },
+      { id: 'set-22', weight: '5 × 50 г', price: 4200 }
+    ]
+  },
+  {
+    id: 'tea-set3',
+    name: 'Подарочный набор «Пять стихий»',
+    description:
+      'Подборка лучших чаёв сезона в мини-упаковках: зелёный, улун, красный, белый и пуэр в стильной коробке.',
+    category: 'sets',
+    tags: ['Набор', 'Подарок'],
+    image:
+      'https://images.unsplash.com/photo-1523905330026-b8bd1f5f320e?auto=format&fit=crop&w=600&q=80',
+    variants: [
+      { id: 'set-13', weight: '5 × 25 г', price: 2500 },
+      { id: 'set-23', weight: '5 × 50 г', price: 4200 }
+    ]
+  },
+  {
+    id: 'tea-set4',
+    name: 'Подарочный набор «Пять стихий»',
+    description:
+      'Подборка лучших чаёв сезона в мини-упаковках: зелёный, улун, красный, белый и пуэр в стильной коробке.',
+    category: 'sets',
+    tags: ['Набор', 'Подарок'],
+    image:
+      'https://images.unsplash.com/photo-1523905330026-b8bd1f5f320e?auto=format&fit=crop&w=600&q=80',
+    variants: [
+      { id: 'set-14', weight: '5 × 25 г', price: 2500 },
+      { id: 'set-24', weight: '5 × 50 г', price: 4200 }
+    ]
+  },
+  {
+    id: 'tea-set5',
+    name: 'Подарочный набор «Пять стихий»',
+    description:
+      'Подборка лучших чаёв сезона в мини-упаковках: зелёный, улун, красный, белый и пуэр в стильной коробке.',
+    category: 'sets',
+    tags: ['Набор', 'Подарок'],
+    image:
+      'https://images.unsplash.com/photo-1523905330026-b8bd1f5f320e?auto=format&fit=crop&w=600&q=80',
+    variants: [
+      { id: 'set-15', weight: '5 × 25 г', price: 2500 },
+      { id: 'set-25', weight: '5 × 50 г', price: 4200 }
+    ]
+  },
+  {
+    id: 'tea-set6',
+    name: 'Подарочный набор «Пять стихий»',
+    description:
+      'Подборка лучших чаёв сезона в мини-упаковках: зелёный, улун, красный, белый и пуэр в стильной коробке.',
+    category: 'sets',
+    tags: ['Набор', 'Подарок'],
+    image:
+      'https://images.unsplash.com/photo-1523905330026-b8bd1f5f320e?auto=format&fit=crop&w=600&q=80',
+    variants: [
+      { id: 'set-16', weight: '5 × 25 г', price: 2500 },
+      { id: 'set-26', weight: '5 × 50 г', price: 4200 }
+    ]
+  },
+  {
+    id: 'tea-set7',
+    name: 'Подарочный набор «Пять стихий»',
+    description:
+      'Подборка лучших чаёв сезона в мини-упаковках: зелёный, улун, красный, белый и пуэр в стильной коробке.',
+    category: 'sets',
+    tags: ['Набор', 'Подарок'],
+    image:
+      'https://images.unsplash.com/photo-1523905330026-b8bd1f5f320e?auto=format&fit=crop&w=600&q=80',
+    variants: [
+      { id: 'set-17', weight: '5 × 25 г', price: 2500 },
+      { id: 'set-27', weight: '5 × 50 г', price: 4200 }
+    ]
   }
 ];
 
