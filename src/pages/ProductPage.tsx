@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { products } from '../data/products';
 import { QuantityControl } from '../components/QuantityControl';
@@ -10,7 +10,36 @@ interface ProductPageProps {
 
 export const ProductPage: React.FC<ProductPageProps> = ({ productId, onGoToCart }) => {
   const product = products.find((item) => item.id === productId);
-  const { addItem, updateItem, getItemQuantity } = useCart();
+  const { addItem, updateItem, getItemQuantity, items } = useCart();
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!product) {
+      return;
+    }
+
+    const variantWithQuantity = product.variants.find(
+      (variant) => getItemQuantity(product.id, variant.id) > 0
+    );
+
+    setSelectedVariantId((prev) => {
+      if (prev && product.variants.some((variant) => variant.id === prev)) {
+        return prev;
+      }
+      return (variantWithQuantity ?? product.variants[0])?.id ?? null;
+    });
+  }, [product, items]);
+
+  const selectedVariant = useMemo(() => {
+    if (!product || !selectedVariantId) {
+      return null;
+    }
+    return product.variants.find((variant) => variant.id === selectedVariantId) ?? null;
+  }, [product, selectedVariantId]);
+
+  const selectedQuantity = selectedVariant
+    ? getItemQuantity(product.id, selectedVariant.id)
+    : 0;
 
   const productTotal = product
     ? product.variants.reduce((sum, variant) => {
@@ -40,30 +69,51 @@ export const ProductPage: React.FC<ProductPageProps> = ({ productId, onGoToCart 
 
       <section className="variant-section">
         <h2 className="section-title">Выбор упаковки</h2>
-        <div className="variant-list">
+        <div className="variant-options">
           {product.variants.map((variant) => {
-            const quantity = getItemQuantity(product.id, variant.id);
+            const isActive = variant.id === selectedVariantId;
             return (
-              <div key={variant.id} className="variant-card">
-                <div>
-                  <div className="variant-weight">{variant.weight}</div>
-                  <div className="variant-price">{variant.price.toLocaleString('ru-RU')} ₽</div>
-                </div>
-                {quantity > 0 ? (
-                  <QuantityControl
-                    value={quantity}
-                    onDecrease={() => updateItem(product.id, variant.id, quantity - 1)}
-                    onIncrease={() => updateItem(product.id, variant.id, quantity + 1)}
-                  />
-                ) : (
-                  <button className="primary-button" onClick={() => addItem(product.id, variant.id)}>
-                    Добавить
-                  </button>
-                )}
-              </div>
+              <button
+                key={variant.id}
+                type="button"
+                className={`chip variant-chip ${isActive ? 'chip-active' : ''}`}
+                onClick={() => setSelectedVariantId(variant.id)}
+              >
+                <span className="variant-chip-weight">{variant.weight}</span>
+                <span className="variant-chip-price">{variant.price.toLocaleString('ru-RU')} ₽</span>
+              </button>
             );
           })}
         </div>
+
+        {selectedVariant && (
+          <div className="variant-control-card">
+            <div className="variant-control-info">
+              <div className="variant-control-weight">{selectedVariant.weight}</div>
+              <div className="variant-control-price">
+                {selectedVariant.price.toLocaleString('ru-RU')} ₽
+              </div>
+            </div>
+            {selectedQuantity > 0 ? (
+              <QuantityControl
+                value={selectedQuantity}
+                onDecrease={() =>
+                  updateItem(product.id, selectedVariant.id, selectedQuantity - 1)
+                }
+                onIncrease={() =>
+                  updateItem(product.id, selectedVariant.id, selectedQuantity + 1)
+                }
+              />
+            ) : (
+              <button
+                className="primary-button"
+                onClick={() => addItem(product.id, selectedVariant.id)}
+              >
+                Добавить
+              </button>
+            )}
+          </div>
+        )}
       </section>
 
       <div className="bottom-bar">
