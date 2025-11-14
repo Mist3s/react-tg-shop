@@ -9,7 +9,7 @@ export const products: Product[] = [
     category: 'green',
     tags: ['Зелёный', 'Ханчжоу', 'Весна'],
     image:
-      'https://images.unsplash.com/photo-1451748266019-8190c75b2b6e?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1523905330026-b8bd1f5f320e?auto=format&fit=crop&w=600&q=80',
     variants: [
       { id: 'dragonwell-50', weight: '50 г', price: 450 },
       { id: 'dragonwell-100', weight: '100 г', price: 820 },
@@ -24,7 +24,7 @@ export const products: Product[] = [
     category: 'black',
     tags: ['Чёрный', 'Уишань', 'Копчёный'],
     image:
-      'https://images.unsplash.com/photo-1523906630133-f6934a1abed9?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1523905330026-b8bd1f5f320e?auto=format&fit=crop&w=600&q=80',
     variants: [
       { id: 'lapsang-50', weight: '50 г', price: 480 },
       { id: 'lapsang-100', weight: '100 г', price: 860 },
