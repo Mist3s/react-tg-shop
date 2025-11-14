@@ -36,15 +36,23 @@ const AppContent: React.FC = () => {
   const handleBack = () => {
     switch (page) {
       case 'product':
+        setSelectedProductId(null);
         setPage('catalog');
         break;
       case 'cart':
-        setPage(selectedProductId ? 'product' : 'catalog');
+        if (selectedProductId) {
+          setPage('product');
+        } else {
+          setSelectedProductId(null);
+          setPage('catalog');
+        }
         break;
       case 'checkout':
         setPage('cart');
         break;
       case 'confirmation':
+        setSelectedProductId(null);
+        setOrderSummary(null);
         setPage('catalog');
         break;
       default:
@@ -84,7 +92,10 @@ const AppContent: React.FC = () => {
 
       {page === 'cart' && (
         <CartPage
-          onContinueShopping={() => setPage('catalog')}
+          onContinueShopping={() => {
+            setSelectedProductId(null);
+            setPage('catalog');
+          }}
           onCheckout={() => setPage('checkout')}
         />
       )}

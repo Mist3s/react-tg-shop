@@ -469,6 +469,26 @@ button {
   gap: 24px;
 }
 
+.checkout-form .section-title {
+  margin: 0;
+}
+
+.checkout-form .section-title + * {
+  margin-top: 12px;
+}
+
+.checkout-form .form-label {
+  margin: 0;
+}
+
+.checkout-form .form-label + .form-label {
+  margin-top: 12px;
+}
+
+.checkout-form .delivery-options + .form-label {
+  margin-top: 12px;
+}
+
 .form-label {
   display: flex;
   flex-direction: column;
