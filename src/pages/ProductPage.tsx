@@ -37,7 +37,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({ productId, onGoToCart 
     return product.variants.find((variant) => variant.id === selectedVariantId) ?? null;
   }, [product, selectedVariantId]);
 
-  const selectedQuantity = selectedVariant
+  const selectedQuantity = selectedVariant && product
     ? getItemQuantity(product.id, selectedVariant.id)
     : 0;
 
