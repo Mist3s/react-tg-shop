@@ -10,7 +10,7 @@ interface CatalogPageProps {
   onCategoryChange: (category: Category) => void;
 }
 
-const LOAD_BATCH_SIZE = 10;
+const LOAD_BATCH_SIZE = 5;
 
 export const CatalogPage: React.FC<CatalogPageProps> = ({
   onSelectProduct,
