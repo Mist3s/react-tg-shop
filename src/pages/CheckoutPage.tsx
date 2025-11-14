@@ -17,6 +17,46 @@ interface FormState {
   comment: string;
 }
 
+type FormErrors = Partial<Record<keyof FormState, string>>;
+
+const formatPhoneNumber = (value: string) => {
+  const digits = value.replace(/\D/g, '');
+
+  if (digits.length === 0) {
+    return '';
+  }
+
+  let normalized = digits;
+
+  if (normalized.startsWith('8')) {
+    normalized = `7${normalized.slice(1)}`;
+  }
+
+  if (!normalized.startsWith('7')) {
+    normalized = `7${normalized}`;
+  }
+
+  normalized = normalized.slice(0, 11);
+
+  const rest = normalized.slice(1);
+  let result = '+7';
+
+  if (rest.length > 0) {
+    result += ` ${rest.slice(0, 3)}`;
+  }
+  if (rest.length > 3) {
+    result += ` ${rest.slice(3, 6)}`;
+  }
+  if (rest.length > 6) {
+    result += `-${rest.slice(6, 8)}`;
+  }
+  if (rest.length > 8) {
+    result += `-${rest.slice(8, 10)}`;
+  }
+
+  return result;
+};
+
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToCart, onOrderComplete }) => {
   const { items, totalCount, totalPrice, clear } = useCart();
   const [form, setForm] = useState<FormState>({
@@ -26,29 +66,60 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToCart, onOrde
     address: '',
     comment: '',
   });
-  const [errors, setErrors] = useState<string[]>([]);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const isAddressRequired = form.delivery === 'courier';
+  const isAddressRequired = form.delivery !== 'pickup';
 
   const validate = () => {
-    const nextErrors: string[] = [];
+    const nextErrors: FormErrors = {};
+
     if (!form.name.trim()) {
-      nextErrors.push('Введите имя');
+      nextErrors.name = 'Укажите имя';
     }
-    if (!form.phone.trim()) {
-      nextErrors.push('Введите телефон');
+
+    const phoneDigits = form.phone.replace(/\D/g, '');
+    if (phoneDigits.length !== 11) {
+      nextErrors.phone = 'Введите номер в формате +7 000 000-00-00';
     }
+
     if (isAddressRequired && !form.address.trim()) {
-      nextErrors.push('Укажите адрес для доставки курьером');
+      nextErrors.address = 'Укажите адрес доставки';
     }
+
     setErrors(nextErrors);
-    return nextErrors.length === 0;
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const clearFieldError = (field: keyof FormState) => {
+    setErrors((prev) => {
+      if (!prev[field]) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
   const handleChange = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    clearFieldError(key);
+
+    if (key === 'delivery' && value === 'pickup') {
+      clearFieldError('address');
+    }
+  };
+
+  const handlePhoneChange = (value: string) => {
+    if (value === '') {
+      handleChange('phone', '');
+      return;
+    }
+
+    const formatted = formatPhoneNumber(value);
+    handleChange('phone', formatted);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -117,8 +188,9 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToCart, onOrde
           <h2 className="section-title">Контактные данные</h2>
           <label className="form-label">
             Имя*
+            {errors.name && <span className="field-error">{errors.name}</span>}
             <input
-              className="input"
+              className={`input ${errors.name ? 'input-error' : ''}`}
               type="text"
               value={form.name}
               onChange={(event) => handleChange('name', event.target.value)}
@@ -127,11 +199,15 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToCart, onOrde
           </label>
           <label className="form-label">
             Телефон*
+            {errors.phone && <span className="field-error">{errors.phone}</span>}
             <input
-              className="input"
+              className={`input ${errors.phone ? 'input-error' : ''}`}
               type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              maxLength={18}
               value={form.phone}
-              onChange={(event) => handleChange('phone', event.target.value)}
+              onChange={(event) => handlePhoneChange(event.target.value)}
               placeholder="+7 ___ ___-__-__"
             />
           </label>
@@ -151,20 +227,29 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToCart, onOrde
               </button>
             ))}
           </div>
-          <label className="form-label">
-            {form.delivery === 'pickup' ? 'Адрес самовывоза' : 'Адрес доставки'}
-            <input
-              className="input"
-              type="text"
-              value={form.address}
-              onChange={(event) => handleChange('address', event.target.value)}
-              placeholder={
-                form.delivery === 'pickup'
-                  ? 'г. Москва, Китай-город, ул. Чайная, 7'
-                  : 'Улица, дом, квартира'
-              }
-            />
-          </label>
+          {form.delivery === 'pickup' ? (
+            <div className="pickup-info">
+              <div className="pickup-title">Пункт самовывоза</div>
+              <div>г. Москва, Китай-город, ул. Чайная, 7</div>
+              <div className="pickup-note">Ежедневно с 10:00 до 22:00, дегустационный зал на втором этаже</div>
+            </div>
+          ) : (
+            <label className="form-label">
+              Адрес доставки*
+              {errors.address && <span className="field-error">{errors.address}</span>}
+              <input
+                className={`input ${errors.address ? 'input-error' : ''}`}
+                type="text"
+                value={form.address}
+                onChange={(event) => handleChange('address', event.target.value)}
+                placeholder={
+                  form.delivery === 'courier'
+                    ? 'Улица, дом, квартира'
+                    : 'Город, пункт выдачи СДЭК'
+                }
+              />
+            </label>
+          )}
         </section>
 
         <section>
@@ -194,13 +279,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToCart, onOrde
           </div>
         </section>
 
-        {errors.length > 0 && (
-          <div className="form-errors">
-            {errors.map((error) => (
-              <div key={error}>{error}</div>
-            ))}
-          </div>
-        )}
         {submitError && <div className="form-errors">{submitError}</div>}
 
         <div className="checkout-actions">

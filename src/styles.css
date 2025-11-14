@@ -484,6 +484,7 @@ button {
   background: rgba(255, 255, 255, 0.04);
   color: inherit;
   font: inherit;
+  width: 100%;
 }
 
 .input:focus,
@@ -495,9 +496,40 @@ button {
   resize: vertical;
 }
 
+.input-error {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.field-error {
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .delivery-options {
   display: flex;
   gap: 8px;
+}
+
+.pickup-info {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.pickup-title {
+  font-weight: 600;
+}
+
+.pickup-note {
+  color: var(--muted-color);
+  font-size: 13px;
 }
 
 .payment-info {
