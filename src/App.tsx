@@ -60,7 +60,7 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const headerVariant = page === 'cart' || page === 'checkout' ? 'minimal' : 'default';
+  const headerVariant = page === 'checkout' ? 'none' : page === 'cart' ? 'minimal' : 'default';
   const showBackButton = headerVariant === 'default' && page !== 'catalog';
   const showHeaderTitle = headerVariant === 'minimal';
 
