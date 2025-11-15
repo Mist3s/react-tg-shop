@@ -67,6 +67,17 @@ button {
   z-index: 10;
 }
 
+.app-header--minimal {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  justify-items: center;
+  padding: 16px;
+  background: var(--bg-color);
+  border-bottom: none;
+  backdrop-filter: none;
+}
+
 .header-left {
   display: flex;
   align-items: center;
@@ -75,6 +86,16 @@ button {
 
 .header-title {
   font-weight: 600;
+}
+
+.header-title--center {
+  text-align: center;
+  width: 100%;
+}
+
+.header-spacer {
+  width: 36px;
+  height: 36px;
 }
 
 .header-actions {
@@ -122,6 +143,10 @@ button {
   flex: 1;
   padding: 16px;
   padding-bottom: 100px;
+}
+
+.app-content--flush {
+  padding-top: 8px;
 }
 
 .page {
@@ -408,6 +433,23 @@ button {
   padding: 12px;
   border-radius: 16px;
   background: var(--card-bg);
+}
+
+.cart-item-main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.cart-item-main:focus-visible {
+  outline: 2px solid var(--primary);
+  border-radius: 12px;
 }
 
 .cart-item-image {

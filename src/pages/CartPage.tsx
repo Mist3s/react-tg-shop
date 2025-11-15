@@ -5,9 +5,10 @@ import { QuantityControl } from '../components/QuantityControl';
 interface CartPageProps {
   onContinueShopping: () => void;
   onCheckout: () => void;
+  onSelectProduct: (productId: string) => void;
 }
 
-export const CartPage: React.FC<CartPageProps> = ({ onContinueShopping, onCheckout }) => {
+export const CartPage: React.FC<CartPageProps> = ({ onContinueShopping, onCheckout, onSelectProduct }) => {
   const { items, updateItem, resolveProduct, resolveVariant, totalCount, totalPrice } = useCart();
 
   if (items.length === 0) {
@@ -37,11 +38,18 @@ export const CartPage: React.FC<CartPageProps> = ({ onContinueShopping, onChecko
 
           return (
             <div key={`${item.productId}-${item.variantId}`} className="cart-item">
-              <img src={product.image} alt={product.name} className="cart-item-image" />
-              <div className="cart-item-info">
-                <div className="cart-item-title">{product.name}</div>
-                <div className="cart-item-subtitle">{variantLabel}</div>
-              </div>
+              <button
+                className="cart-item-main"
+                type="button"
+                onClick={() => onSelectProduct(item.productId)}
+                aria-label={`Открыть ${product.name}`}
+              >
+                <img src={product.image} alt={product.name} className="cart-item-image" />
+                <div className="cart-item-info">
+                  <div className="cart-item-title">{product.name}</div>
+                  <div className="cart-item-subtitle">{variantLabel}</div>
+                </div>
+              </button>
               <div className="cart-item-actions">
                 <QuantityControl
                   value={item.quantity}

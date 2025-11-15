@@ -60,7 +60,9 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const showBackButton = page !== 'catalog';
+  const headerVariant = page === 'cart' || page === 'checkout' ? 'minimal' : 'default';
+  const showBackButton = headerVariant === 'default' && page !== 'catalog';
+  const showHeaderTitle = headerVariant === 'minimal';
 
   return (
     <Layout
@@ -68,7 +70,10 @@ const AppContent: React.FC = () => {
       cartCount={totalCount}
       showBackButton={showBackButton}
       onBack={handleBack}
+      onClose={headerVariant === 'minimal' ? handleBack : undefined}
       onCartClick={() => setPage('cart')}
+      headerVariant={headerVariant}
+      showTitle={showHeaderTitle}
     >
       {page === 'catalog' && (
         <CatalogPage
@@ -97,6 +102,10 @@ const AppContent: React.FC = () => {
             setPage('catalog');
           }}
           onCheckout={() => setPage('checkout')}
+          onSelectProduct={(productId) => {
+            setSelectedProductId(productId);
+            setPage('product');
+          }}
         />
       )}
 
