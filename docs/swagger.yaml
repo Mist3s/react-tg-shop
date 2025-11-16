@@ -1,0 +1,631 @@
+openapi: 3.0.3
+info:
+  title: TeaGram Shop API
+  description: |
+    REST API для Telegram Web App-магазина чая. Используется вместо моков и статичных данных
+    фронтенда. Авторизация выполняется бесшовно через `initData` из Telegram Web App;
+    фронтенд хранит только токены (access/refresh) и повторно отправляет `initData` при невозможности
+    обновить сессию через refresh.
+  version: 1.0.0
+servers:
+  - url: https://api.teagram.example
+    description: Прод
+  - url: http://localhost:3000
+    description: Локальный бэкенд
+paths:
+  /auth/telegram/init:
+    post:
+      summary: Обмен initData на пары токенов
+      description: |
+        При первом открытии web app фронтенд отправляет `initData` из Telegram. Бэкенд валидирует
+        подпись и, если данные корректны, создает или обновляет профиль пользователя, возвращает
+        `accessToken` и `refreshToken` вместе с основными данными профиля. В случае невалидного
+        `initData` фронтенд должен показать экран ошибки авторизации и заглушку.
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelegramInitRequest'
+      responses:
+        '200':
+          description: Успешная авторизация через Telegram
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Невалидные данные Telegram или подпись
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Слишком много попыток
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/refresh:
+    post:
+      summary: Обновление access токена
+      description: |
+        Используется фронтендом при получении 401 из защищённых эндпоинтов. При истечении `accessToken`
+        отправляется `refreshToken`. Если refresh истёк или невалиден, фронтенд повторяет авторизацию
+        через `/auth/telegram/init` с новым `initData`.
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Успешное обновление токенов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+        '401':
+          description: Refresh истёк или отозван; требуется повторно отправить initData
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/profile:
+    get:
+      summary: Получение профиля авторизованного пользователя
+      security:
+        - bearerAuth: []
+      tags: [auth]
+      responses:
+        '200':
+          description: Информация о пользователе из Telegram (кэшированная)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Токен истёк или невалиден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /catalog/categories:
+    get:
+      summary: Список категорий каталога
+      tags: [catalog]
+      responses:
+        '200':
+          description: Категории товаров
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+  /catalog/products:
+    get:
+      summary: Получение каталога товаров
+      tags: [catalog]
+      parameters:
+        - in: query
+          name: category
+          schema:
+            $ref: '#/components/schemas/ProductCategory'
+          description: Фильтрация по категории
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Поиск по названию/тегам
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Пагинированный список товаров
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+  /catalog/products/{productId}:
+    get:
+      summary: Детали товара
+      tags: [catalog]
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Карточка товара
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Товар не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /cart:
+    get:
+      summary: Текущее состояние корзины пользователя
+      security:
+        - bearerAuth: []
+      tags: [cart]
+      responses:
+        '200':
+          description: Корзина хранится на бэкенде и привязана к пользователю
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Очистка корзины
+      security:
+        - bearerAuth: []
+      tags: [cart]
+      responses:
+        '204':
+          description: Корзина очищена
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /cart/items:
+    post:
+      summary: Добавить товар в корзину или увеличить количество
+      security:
+        - bearerAuth: []
+      tags: [cart]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemInput'
+      responses:
+        '200':
+          description: Актуальная корзина после добавления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: Вариант товара не найден или недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Полная замена содержимого корзины
+      description: Используется для синхронизации корзины, например, после восстановления токенов.
+      security:
+        - bearerAuth: []
+      tags: [cart]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CartItemInput'
+              required: [items]
+      responses:
+        '200':
+          description: Актуальная корзина
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /cart/items/{productId}/{variantId}:
+    patch:
+      summary: Обновить количество позиции
+      security:
+        - bearerAuth: []
+      tags: [cart]
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: variantId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 0
+              required: [quantity]
+      responses:
+        '200':
+          description: Корзина после изменения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: Некорректное количество
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Удалить позицию из корзины
+      security:
+        - bearerAuth: []
+      tags: [cart]
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: variantId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Корзина после удаления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /orders:
+    post:
+      summary: Создание заказа на основе корзины
+      description: |
+        Фронтенд отправляет данные пользователя и способ доставки. Товары берутся из серверной
+        корзины авторизованного пользователя. При успехе корзина очищается. Эндпоинт заменяет текущую
+        имитацию оформления заказа на фронтенде.
+      security:
+        - bearerAuth: []
+      tags: [orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '201':
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderSummary'
+        '400':
+          description: Ошибка валидации (например, пустая корзина или неверный телефон)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /orders/{orderId}:
+    get:
+      summary: Получение сведений о заказе
+      security:
+        - bearerAuth: []
+      tags: [orders]
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали заказа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetails'
+        '404':
+          description: Заказ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TelegramInitRequest:
+      type: object
+      properties:
+        initData:
+          type: string
+          description: Строка инициализации из Telegram Web App (window.Telegram.WebApp.initData)
+        appVersion:
+          type: string
+          description: Версия web app для диагностики
+      required: [initData]
+    AuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT для авторизации (заголовок Authorization: Bearer <token>)
+        refreshToken:
+          type: string
+          description: Долгоживущий токен для обновления сессии
+        expiresIn:
+          type: integer
+          description: Время жизни accessToken в секундах
+        refreshExpiresIn:
+          type: integer
+          description: Время жизни refreshToken в секундах
+      required: [accessToken, refreshToken, expiresIn, refreshExpiresIn]
+    AuthResponse:
+      type: object
+      properties:
+        tokens:
+          $ref: '#/components/schemas/AuthTokens'
+        user:
+          $ref: '#/components/schemas/UserProfile'
+    RefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+      required: [refreshToken]
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Внутренний идентификатор пользователя
+        telegramId:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+          nullable: true
+        username:
+          type: string
+          nullable: true
+        languageCode:
+          type: string
+          nullable: true
+        photoUrl:
+          type: string
+          format: uri
+          nullable: true
+      required: [id, telegramId, firstName]
+    Category:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/ProductCategory'
+        label:
+          type: string
+      required: [id, label]
+    ProductCategory:
+      type: string
+      enum: [green, black, oolong, puer, sets]
+    ProductVariant:
+      type: object
+      properties:
+        id:
+          type: string
+        weight:
+          type: string
+          example: "100 г"
+        price:
+          type: number
+          example: 820
+      required: [id, weight, price]
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/ProductCategory'
+        tags:
+          type: array
+          items:
+            type: string
+        image:
+          type: string
+          format: uri
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+      required: [id, name, description, category, tags, image, variants]
+    CartItemInput:
+      type: object
+      properties:
+        productId:
+          type: string
+        variantId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+      required: [productId, variantId]
+    CartItem:
+      allOf:
+        - $ref: '#/components/schemas/CartItemInput'
+        - type: object
+          properties:
+            price:
+              type: number
+              description: Цена варианта на момент добавления
+            total:
+              type: number
+              description: price * quantity
+    Cart:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        totalCount:
+          type: integer
+        totalPrice:
+          type: number
+        updatedAt:
+          type: string
+          format: date-time
+      required: [items, totalCount, totalPrice]
+    DeliveryMethod:
+      type: string
+      enum: [pickup, courier, cdek]
+    OrderRequest:
+      type: object
+      properties:
+        customerName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          description: Номер телефона в формате +7 000 000-00-00
+        delivery:
+          $ref: '#/components/schemas/DeliveryMethod'
+        address:
+          type: string
+          description: Обязательно для courier и cdek
+        comment:
+          type: string
+          maxLength: 500
+        expectedTotal:
+          type: number
+          description: Итог из UI для сверки; при расхождении вернуть 400 с деталями
+      required: [customerName, phone, delivery]
+    OrderSummary:
+      type: object
+      properties:
+        orderId:
+          type: string
+        customerName:
+          type: string
+        deliveryMethod:
+          type: string
+        total:
+          type: number
+      required: [orderId, customerName, deliveryMethod, total]
+    OrderDetails:
+      allOf:
+        - $ref: '#/components/schemas/OrderSummary'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/CartItem'
+            address:
+              type: string
+              nullable: true
+            comment:
+              type: string
+              nullable: true
+            status:
+              type: string
+              enum: [created, processing, paid, fulfilled, cancelled]
+            createdAt:
+              type: string
+              format: date-time
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+          description: Машинное описание ошибки (например, INVALID_INIT_DATA, CART_EMPTY)
+      required: [message]
