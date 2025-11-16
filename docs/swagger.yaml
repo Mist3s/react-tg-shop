@@ -431,7 +431,7 @@ components:
       properties:
         accessToken:
           type: string
-          description: JWT для авторизации (заголовок Authorization: Bearer <token>)
+          description: "JWT для авторизации (заголовок Authorization: Bearer <token>)"
         refreshToken:
           type: string
           description: Долгоживущий токен для обновления сессии
