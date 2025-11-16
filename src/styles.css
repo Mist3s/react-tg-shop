@@ -6,10 +6,10 @@
   --card-bg: rgba(255, 255, 255, 0.9);
   --text-color: #111827;
   --muted-color: #6b7280;
-  --primary: #2aabee;
-  --primary-dark: #2495ce;
+  --primary: #1f883d;
+  --primary-dark: #197935;
   --border-color: rgba(17, 24, 39, 0.08);
-  --chip-bg: rgba(42, 171, 238, 0.12);
+  --chip-bg: rgba(149, 216, 166, 0.12);
   --ghost-bg: rgba(255, 255, 255, 0.5);
 }
 
@@ -19,10 +19,10 @@
   --card-bg: rgba(30, 41, 59, 0.85);
   --text-color: #f8fafc;
   --muted-color: #94a3b8;
-  --primary: #2aabee;
-  --primary-dark: #1d8ac0;
+  --primary: #1f883d;
+  --primary-dark: #197935;
   --border-color: rgba(148, 163, 184, 0.2);
-  --chip-bg: rgba(42, 171, 238, 0.18);
+  --chip-bg: rgba(149, 216, 166, 0.12);
   --ghost-bg: rgba(148, 163, 184, 0.12);
 }
 
