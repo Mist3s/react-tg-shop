@@ -10,7 +10,7 @@ interface LayoutProps {
   onCartClick?: () => void;
   cartCount: number;
   showBackButton?: boolean;
-  headerVariant?: 'default' | 'minimal';
+  headerVariant?: 'default' | 'minimal' | 'none';
   showTitle?: boolean;
 }
 
@@ -74,10 +74,28 @@ export const Layout: React.FC<LayoutProps> = ({
     );
   };
 
+  const renderHeader = () => {
+    if (headerVariant === 'none') {
+      return null;
+    }
+
+    return headerVariant === 'minimal' ? renderMinimalHeader() : renderDefaultHeader();
+  };
+
+  const contentClasses = ['app-content'];
+
+  if (headerVariant === 'minimal') {
+    contentClasses.push('app-content--flush');
+  }
+
+  if (headerVariant === 'none') {
+    contentClasses.push('app-content--centered');
+  }
+
   return (
     <div className="app-shell">
-      {headerVariant === 'minimal' ? renderMinimalHeader() : renderDefaultHeader()}
-      <main className={`app-content${headerVariant === 'minimal' ? ' app-content--flush' : ''}`}>{children}</main>
+      {renderHeader()}
+      <main className={contentClasses.join(' ')}>{children}</main>
     </div>
   );
 };
