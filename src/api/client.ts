@@ -37,6 +37,8 @@ const persistAuthTokens = (tokens: AuthTokens | null) => {
 
 let inFlightRefresh: Promise<AuthTokens | null> | null = null;
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const refreshTokens = async (): Promise<AuthTokens | null> => {
   if (inFlightRefresh) {
     return inFlightRefresh;
@@ -91,33 +93,65 @@ export const request = async <T>(path: string, options: RequestOptions = {}): Pr
     headers.set('Authorization', `Bearer ${tokens.accessToken}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  const MAX_ATTEMPTS = 3;
+  const BASE_DELAY_MS = 500;
 
-  if (response.ok) {
-    if (response.status === 204) {
-      return undefined as T;
+  let attempt = 0;
+  let lastError: unknown;
+
+  while (attempt < MAX_ATTEMPTS) {
+    try {
+      const response = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers,
+      });
+
+      if (response.ok) {
+        if (response.status === 204) {
+          return undefined as T;
+        }
+        return (await response.json()) as T;
+      }
+
+      if (response.status === 401 && !options.skipAuth) {
+        const refreshed = await refreshTokens();
+        if (refreshed?.accessToken) {
+          return request<T>(path, options);
+        }
+      }
+
+      const retryable = response.status === 429 || response.status >= 500;
+      if (retryable && attempt + 1 < MAX_ATTEMPTS) {
+        const backoff = BASE_DELAY_MS * 2 ** attempt + Math.floor(Math.random() * 150);
+        await delay(backoff);
+        attempt += 1;
+        continue;
+      }
+
+      let errorBody: unknown;
+      try {
+        errorBody = await response.json();
+      } catch (error) {
+        errorBody = null;
+      }
+
+      lastError = new ApiError('Request failed', response.status, errorBody);
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt + 1 < MAX_ATTEMPTS) {
+        const backoff = BASE_DELAY_MS * 2 ** attempt + Math.floor(Math.random() * 150);
+        await delay(backoff);
+        attempt += 1;
+        continue;
+      }
+      break;
     }
-    return (await response.json()) as T;
   }
 
-  if (response.status === 401 && !options.skipAuth) {
-    const refreshed = await refreshTokens();
-    if (refreshed?.accessToken) {
-      return request<T>(path, options);
-    }
-  }
-
-  let errorBody: unknown;
-  try {
-    errorBody = await response.json();
-  } catch (error) {
-    errorBody = null;
-  }
-
-  throw new ApiError('Request failed', response.status, errorBody);
+  throw lastError instanceof ApiError
+    ? lastError
+    : new ApiError('Network request failed', undefined, (lastError as Error | undefined)?.message);
 };
 
 export const setAuthTokens = (tokens: AuthTokens | null) => persistAuthTokens(tokens);

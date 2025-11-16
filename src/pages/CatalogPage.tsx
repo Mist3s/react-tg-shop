@@ -59,6 +59,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
       } catch (err) {
         console.error(err);
         setError('Не удалось загрузить товары');
+        setHasMore(false);
       } finally {
         setIsLoading(false);
       }
@@ -107,7 +108,21 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           <ProductCard key={product.id} product={product} onClick={() => onSelectProduct(product.id)} />
         ))}
       </div>
-      {error && <div className="infinite-scroll-status">{error}</div>}
+      {error && (
+        <div className="infinite-scroll-status">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setHasMore(true);
+              void loadProducts('reset');
+            }}
+            disabled={isLoading}
+          >
+            Повторить попытку
+          </button>
+        </div>
+      )}
       <div ref={sentinelRef} className="scroll-sentinel" aria-hidden="true" />
       <div className="infinite-scroll-status">
         {!isLoading && products.length === 0 && <span>Товары не найдены</span>}
