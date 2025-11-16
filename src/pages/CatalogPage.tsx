@@ -25,21 +25,50 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const isLoadingRef = useRef(false);
 
-  useEffect(() => {
-    fetchCategories()
-      .then((response) =>
-        setCategories([{ id: 'all', label: 'Все' }, ...response.items.map((item) => ({ id: item.id, label: item.label }))])
-      )
-      .catch(() => setError('Не удалось загрузить категории'));
-  }, []);
+  const refreshPageData = useCallback(async () => {
+    if (isLoadingRef.current) {
+      return;
+    }
+
+    isLoadingRef.current = true;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [categoriesResponse, productsResponse] = await Promise.all([
+        fetchCategories(),
+        fetchProducts({
+          category: activeCategory === 'all' ? undefined : activeCategory,
+          offset: 0,
+          limit: LOAD_BATCH_SIZE,
+        }),
+      ]);
+
+      setCategories([
+        { id: 'all', label: 'Все' },
+        ...categoriesResponse.items.map((item) => ({ id: item.id, label: item.label })),
+      ]);
+      setProducts(productsResponse.items);
+      setHasMore(productsResponse.items.length < productsResponse.total);
+    } catch (err) {
+      console.error(err);
+      setError('Не удалось загрузить каталог');
+      setProducts([]);
+      setHasMore(false);
+    } finally {
+      isLoadingRef.current = false;
+      setIsLoading(false);
+    }
+  }, [activeCategory]);
 
   const loadProducts = useCallback(
     async (mode: 'reset' | 'append') => {
-      if (isLoading) {
+      if (isLoadingRef.current) {
         return;
       }
 
+      isLoadingRef.current = true;
       setIsLoading(true);
       setError(null);
       try {
@@ -61,15 +90,16 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
         setError('Не удалось загрузить товары');
         setHasMore(false);
       } finally {
+        isLoadingRef.current = false;
         setIsLoading(false);
       }
     },
-    [activeCategory, isLoading, products.length]
+    [activeCategory, products.length]
   );
 
   useEffect(() => {
-    void loadProducts('reset');
-  }, [activeCategory, loadProducts]);
+    void refreshPageData();
+  }, [activeCategory, refreshPageData]);
 
   useEffect(() => {
     if (!hasMore) {
@@ -115,7 +145,7 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
             type="button"
             onClick={() => {
               setHasMore(true);
-              void loadProducts('reset');
+              void refreshPageData();
             }}
             disabled={isLoading}
           >

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { QuantityControl } from '../components/QuantityControl';
 import { fetchProductById } from '../api/catalog';
@@ -16,19 +16,24 @@ export const ProductPage: React.FC<ProductPageProps> = ({ productId, onGoToCart 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadProduct = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    fetchProductById(productId)
-      .then((response) => {
-        setProduct(response);
-      })
-      .catch(() => {
-        setError('Товар не найден');
-        setProduct(null);
-      })
-      .finally(() => setIsLoading(false));
+    try {
+      const response = await fetchProductById(productId);
+      setProduct(response);
+    } catch (err) {
+      console.error(err);
+      setError('Не удалось загрузить товар');
+      setProduct(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, [productId]);
+
+  useEffect(() => {
+    void loadProduct();
+  }, [loadProduct]);
 
   useEffect(() => {
     if (!product) {
@@ -70,7 +75,16 @@ export const ProductPage: React.FC<ProductPageProps> = ({ productId, onGoToCart 
   }
 
   if (error || !product) {
-    return <div className="page">{error ?? 'Товар не найден'}</div>;
+    return (
+      <div className="page product-page">
+        <div className="empty-state">
+          <p>{error ?? 'Товар не найден'}</p>
+          <button className="cta-button" onClick={() => void loadProduct()} disabled={isLoading}>
+            Повторить загрузку
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
